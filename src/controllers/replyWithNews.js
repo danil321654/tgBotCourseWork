@@ -18,9 +18,10 @@ module.exports = async ctx => {
 
   await Promise.all(
     res.map(async el => {
-      await ctx.replyWithPhoto(
-        {url: el.urlToImage},
-        {caption: `${el.title}\n${existUser.language == "RU" ? "Больше информации" : "More info"}: ${el.url}`}
+      await ctx.reply(
+        `${el.title}\n${
+          existUser.language == "RU" ? "Больше информации" : "More info"
+        }: ${el.url}`
       );
       return el;
     })
