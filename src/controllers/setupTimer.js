@@ -8,14 +8,14 @@ module.exports = async ctx => {
       : ctx.update.callback_query.message.chat.id
   });
   await ctx.reply(  `${
-      existUser.language == "RU" ? "Выберите интервал" : "Choose interval"
+      existUser.language == "RU" ? "Выберите время информирования" : "Choose time to get info"
     }:`, {
     reply_markup: JSON.stringify({
       inline_keyboard: [
         ...[
-          [2,6,12,24].map(el =>
+          [8,12,16,22].map(el =>
             Markup.callbackButton(
-              `${el}`,
+              `${el}:00`,
               `${el} hours`
             )
           )

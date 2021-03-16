@@ -2,7 +2,7 @@ require("dotenv").config();
 const fs = require("fs");
 const {Markup} = require("telegraf");
 
-var cron = require("node-cron");
+const schedule = require("node-schedule");
 
 const {bot, telegram} = require("./telegraf");
 const replyWithWeather = require("./controllers/replyWithWeather");
@@ -19,6 +19,8 @@ const db = require("./config/db");
 const User = require("./models/user");
 const translate = require("./util/translate");
 
+let job;
+
 const delMenu = async ctx => {
   try {
     console.log(ctx.update);
@@ -33,8 +35,32 @@ const delMenu = async ctx => {
   } catch {}
 };
 
+const sendJob = async function(ctx) {
+  let existUser = await User.findOne({
+    chatId: ctx.update.message
+      ? ctx.update.message.chat.id
+      : ctx.update.callback_query.message.chat.id
+  });
+  await replyWithWeather(ctx, `${existUser.city} ${existUser.country}`);
+  await replyWithCurrency(ctx);
+  await replyWithNews(ctx);
+};
+
 bot.start(async ctx => {
   await getFirstInfo(ctx);
+  await User.findOneAndUpdate(
+    {
+      chatId: ctx.update.message
+        ? ctx.update.message.chat.id
+        : ctx.update.callback_query.message.chat.id
+    },
+    {
+      $set: {
+        settingsPos: "language"
+      }
+    }
+  );
+
   await setupLanguage(ctx);
 });
 
@@ -118,31 +144,21 @@ bot.action(/[0-9]* hours/, async ctx => {
       }
     }
   );
-  const sendJob = async function() {
-    let existUser = await User.findOne({
-      chatId: ctx.update.message
-        ? ctx.update.message.chat.id
-        : ctx.update.callback_query.message.chat.id
-    });
-    await replyWithWeather(ctx, `${existUser.city} ${existUser.country}`);
-    await replyWithCurrency(ctx);
-    await replyWithNews(ctx);
-  };
 
   await replyWithWeather(ctx, `${existUser.city} ${existUser.country}`);
   await replyWithCurrency(ctx);
   await replyWithNews(ctx);
 
-  await runAsker(ctx);
-  if (ctx.update.callback_query.data.split(" ")[0] != "-1")
-    cron.schedule(
-      `0 */${ctx.update.callback_query.data.split(" ")[0]} * * *`,
-      async () => await sendJob,
-      {
-        scheduled: true,
-        tz: "Europe/Moscow"
-      }
-    );
+  await runAsker(ctx, sendJob);
+
+  job = schedule.scheduleJob(
+    `0 0 ${ctx.update.callback_query.data.split(" ")[0]} * * *`,
+    async () => {
+      await delMenu(ctx);
+      await sendJob(ctx);
+      await runAsker(ctx);
+    }
+  );
 });
 
 const getWeather = async ctx => {
@@ -152,7 +168,8 @@ const getWeather = async ctx => {
       : ctx.update.callback_query.message.chat.id
   });
   await replyWithWeather(ctx, `${existUser.city} ${existUser.country}`);
-  await runAsker(ctx);
+
+  await runAsker(ctx, sendJob);
 };
 
 bot.action(/weather!/, async ctx => {
@@ -164,10 +181,21 @@ bot.command("weather", async ctx => await getWeather(ctx));
 
 const getCurrencies = async ctx => {
   await replyWithCurrency(ctx);
-  await runAsker(ctx);
+  const sendJob = async function() {
+    let existUser = await User.findOne({
+      chatId: ctx.update.message
+        ? ctx.update.message.chat.id
+        : ctx.update.callback_query.message.chat.id
+    });
+    await replyWithWeather(ctx, `${existUser.city} ${existUser.country}`);
+    await replyWithCurrency(ctx);
+    await replyWithNews(ctx);
+  };
+
+  await runAsker(ctx, sendJob);
 };
 bot.action(/currencies!/, async ctx => {
-  //delMenu(ctx);
+  delMenu(ctx);
   await getCurrencies(ctx);
 });
 
@@ -175,7 +203,17 @@ bot.command("currencies", async ctx => await getCurrencies(ctx));
 
 const getNews = async ctx => {
   await replyWithNews(ctx);
-  await runAsker(ctx);
+  const sendJob = async function() {
+    let existUser = await User.findOne({
+      chatId: ctx.update.message
+        ? ctx.update.message.chat.id
+        : ctx.update.callback_query.message.chat.id
+    });
+    await replyWithWeather(ctx, `${existUser.city} ${existUser.country}`);
+    await replyWithCurrency(ctx);
+    await replyWithNews(ctx);
+  };
+  await runAsker(ctx, sendJob);
 };
 
 bot.action(/news!/, async ctx => {
@@ -183,5 +221,27 @@ bot.action(/news!/, async ctx => {
   await getNews(ctx);
 });
 bot.command("news", async ctx => await getNews(ctx));
+
+bot.command("unsubscribe", async () => job.cancel());
+
+bot.command("subscribe", async ctx => {
+  try {
+    job.cancel();
+
+    let existUser = await User.findOne({
+      chatId: ctx.update.message
+        ? ctx.update.message.chat.id
+        : ctx.update.callback_query.message.chat.id
+    });
+    job = schedule.scheduleJob(
+      `0 0 ${existUser.timerHours} * * *`,
+      async () => {
+        await delMenu(ctx);
+        await sendJob(ctx);
+        await runAsker(ctx);
+      }
+    );
+  } catch {}
+});
 
 bot.launch();

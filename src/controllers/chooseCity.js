@@ -22,11 +22,14 @@ module.exports = async (ctx, city = undefined) => {
   let res;
   let requestedCitySplit = requestedCity.split("_");
   console.log(requestedCitySplit);
+  if (/[а-яА-ЯЁё]/.test(requestedCitySplit[0]))
+    requestedCitySplit[0] = await translate(requestedCitySplit[0], {from: "ru", to: "en"});
+  console.log(await translate(requestedCitySplit[0], {from: "ru", to: "en"}));
   if (requestedCitySplit[0].length < 3)
     ctx.reply(existUser.language == "RU" ? "Неверный запрос" : "Bad request");
   else if (requestedCitySplit.length == 1) {
     requestedCity = {
-      city: requestedCity
+      city: requestedCitySplit[0]
         .toLowerCase()
         .split("-")
         .map(
