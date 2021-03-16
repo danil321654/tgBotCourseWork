@@ -47,7 +47,7 @@ module.exports = async ctx => {
       },
       {
         $set: {
-          settingsPos: "currencies",
+          settingsPos: "city",
           language: ctx.update.callback_query.data.split("-")[0]
         }
       }

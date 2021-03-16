@@ -22,8 +22,13 @@ module.exports = async (ctx, city = undefined) => {
   let res;
   let requestedCitySplit = requestedCity.split("_");
   console.log(requestedCitySplit);
-  if (/[а-яА-ЯЁё]/.test(requestedCitySplit[0]))
-    requestedCitySplit[0] = await translate(requestedCitySplit[0], {from: "ru", to: "en"});
+  if (/ростов-на-дону/i.test(requestedCitySplit[0]))
+    requestedCitySplit[0] = "rostov-na-donu";
+  else if (/[а-яА-ЯЁё]/.test(requestedCitySplit[0]))
+    requestedCitySplit[0] = await translate(requestedCitySplit[0], {
+      from: "ru",
+      to: "en"
+    });
   console.log(await translate(requestedCitySplit[0], {from: "ru", to: "en"}));
   if (requestedCitySplit[0].length < 3)
     ctx.reply(existUser.language == "RU" ? "Неверный запрос" : "Bad request");
@@ -92,10 +97,11 @@ module.exports = async (ctx, city = undefined) => {
         $set: {
           city: res[0].name,
           country: res[0].country,
-          settingsPos: "language"
+          settingsPos: "currencies"
         }
       }
     );
+
     return;
   } else if (res.length > 1) {
     await ctx.replyWithMarkdown(

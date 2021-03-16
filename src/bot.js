@@ -99,7 +99,12 @@ bot.action(/[\w]*-language/, async ctx => {
   );
   bot.on("message", async ctx => {
     await chooseCity(ctx);
-    //await setupCurrency(ctx);
+    let existUser2 = await User.findOne({
+      chatId: ctx.update.message
+        ? ctx.update.message.chat.id
+        : ctx.update.callback_query.message.chat.id
+    });
+    if (existUser2.settingsPos == "currencies") await setupCurrency(ctx);
   });
 });
 
