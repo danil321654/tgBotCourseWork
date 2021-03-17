@@ -157,7 +157,7 @@ bot.action(/[0-9]* hours/, async ctx => {
   await runAsker(ctx, sendJob);
 
   job = schedule.scheduleJob(
-    `0 0 ${ctx.update.callback_query.data.split(" ")[0]} * * *`,
+    `0 0 ${+ctx.update.callback_query.data.split(" ")[0]-3} * * *`,
     async () => {
       await delMenu(ctx);
       await sendJob(ctx);
