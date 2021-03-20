@@ -22,12 +22,14 @@ module.exports = async ctx => {
         })
       });
   } else {
+    let choosedLang = ctx.update.callback_query.data.split("-")[0];
     try {
+      if(choosedLang == "RU" || choosedLang == "EN" || choosedLang == "✓RU" || choosedLang == "✓EN")
       await ctx.editMessageReplyMarkup(
         JSON.stringify({
           inline_keyboard: [
             ...[
-              (ctx.update.callback_query.data.split("-")[0] == "RU"
+              ((choosedLang == "RU" || choosedLang == "✓RU") 
                 ? ["✓RU", "EN"]
                 : ["RU", "✓EN"]
               ).map(el => Markup.callbackButton(`${el}`, `${el}-language`))
@@ -48,7 +50,7 @@ module.exports = async ctx => {
       {
         $set: {
           settingsPos: "city",
-          language: ctx.update.callback_query.data.split("-")[0]
+          language: (choosedLang == "RU" ||  choosedLang == "✓RU") ? "RU" : "EN"
         }
       }
     );

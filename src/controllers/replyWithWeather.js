@@ -1,6 +1,6 @@
 const axios = require("axios");
 const Levenshtein = require("levenshtein");
-const {Markup} = require("telegraf");
+const { Markup } = require("telegraf");
 const KtoC = require("../util/temp");
 const cities = require("../util/current.city.list.min");
 const weatherSticker = require("../util/weatherSticker");
@@ -8,7 +8,7 @@ const translate = require("../util/translate");
 const User = require("../models/user");
 
 const citiesNamesCountries = cities.map(el => {
-  return {id: el.id, name: el.name, country: el.country};
+  return { id: el.id, name: el.name, country: el.country };
 });
 
 module.exports = async (ctx, city = undefined) => {
@@ -78,16 +78,23 @@ module.exports = async (ctx, city = undefined) => {
       `https://api.openweathermap.org/data/2.5/weather?id=${res[0].id}&appid=${process.env.weatherToken}`
     );
     await ctx.reply(
-      `Temperature in ${res[0].name} is ${KtoC(
-        response.data.main.temp
-      )} °С\nFeels like ${KtoC(response.data.main.feels_like)}°С\n`
+
+      existUser.language == "RU" ?
+        `Температура в городе ${await translate(res[0].name, "ru")} - ${KtoC(
+          response.data.main.temp
+        )} °С\nЧувствуется как ${KtoC(response.data.main.feels_like)}°С\n`
+
+        :
+        `Temperature in ${res[0].name} is ${KtoC(
+          response.data.main.temp
+        )} °С\nFeels like ${KtoC(response.data.main.feels_like)}°С\n`
     );
     await ctx.reply(
       response.data.weather[0].description[0].toUpperCase() +
-        response.data.weather[0].description.substr(
-          1,
-          response.data.weather[0].description.length
-        )
+      response.data.weather[0].description.substr(
+        1,
+        response.data.weather[0].description.length
+      )
     );
     await Promise.all(
       weatherSticker(response.data).map(

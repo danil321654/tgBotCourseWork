@@ -14,7 +14,7 @@ const userSchema = new Schema({
   language: {
     type: String,
     required: true,
-    default: "EN"
+    default: "RU"
   },
   city: {
     type: String,
