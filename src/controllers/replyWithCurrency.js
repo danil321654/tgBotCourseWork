@@ -46,5 +46,5 @@ module.exports = async ctx => {
   );
 
   console.log(currencyMatrixReply);
-  await ctx.reply(`<pre>${currencyMatrixReply}</pre>`, {parse_mode: "HTML"});
+  if (currencyMatrixReply != "") await ctx.reply(`<pre>${currencyMatrixReply}</pre>`, { parse_mode: "HTML" });
 };
