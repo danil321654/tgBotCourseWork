@@ -8,7 +8,7 @@ module.exports = async (ctx, callback) => {
       : ctx.update.callback_query.message.chat.id
   });
   await ctx.reply(
-    `${existUser.language == "RU" ? "Выберите действие" : "Choose action"}:`,
+    `${existUser.language == "RU" ? "/start - настроить бота\nВыберите действие" : "/start - to setup bot\nChoose action"}:`,
     {
       reply_markup: JSON.stringify({
         inline_keyboard: [

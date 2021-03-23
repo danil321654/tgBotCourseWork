@@ -46,5 +46,9 @@ module.exports = async ctx => {
   );
 
   console.log(currencyMatrixReply);
+  currencyMatrixReply = currencyMatrixReply.split('\n');
+  currencyMatrixReply.sort();
+  currencyMatrixReply = currencyMatrixReply.join('\n------------------\n');
+  
   if (currencyMatrixReply != "") await ctx.reply(`<pre>${currencyMatrixReply}</pre>`, { parse_mode: "HTML" });
 };

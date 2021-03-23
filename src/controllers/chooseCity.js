@@ -1,6 +1,6 @@
 const axios = require("axios");
 const Levenshtein = require("levenshtein");
-const {Markup} = require("telegraf");
+const { Markup } = require("telegraf");
 const KtoC = require("../util/temp");
 const cities = require("../util/current.city.list.min");
 const weatherSticker = require("../util/weatherSticker");
@@ -8,8 +8,20 @@ const User = require("../models/user");
 const translate = require("../util/translate");
 
 const citiesNamesCountries = cities.map(el => {
-  return {id: el.id, name: el.name, country: el.country};
+  return !el.langs
+    ? { id: el.id, name: el.name, country: el.country }
+    : el.langs.filter(x => x.ru).length > 0
+      ? {
+        id: el.id,
+        name: el.name,
+        country: el.country,
+        ruName: el.langs.filter(x => x.ru)[0].ru
+      }
+      : { id: el.id, name: el.name, country: el.country };
 });
+const ruNames = citiesNamesCountries.filter(el => el.ruName);
+
+console.log(cities[0])
 
 module.exports = async (ctx, city = undefined) => {
   let existUser = await User.findOne({
@@ -24,12 +36,25 @@ module.exports = async (ctx, city = undefined) => {
   console.log(requestedCitySplit);
   if (/ростов-на-дону/i.test(requestedCitySplit[0]))
     requestedCitySplit[0] = "rostov-na-donu";
+  else if (/санкт-петербург/i.test(requestedCitySplit[0]))
+    requestedCitySplit[0] = "Saint Petersburg";
+  else if (ruNames.map(el => el.ruName).includes(requestedCitySplit[0]))
+    requestedCitySplit[0] =
+      ruNames[
+        ruNames.map((el => el.ruName)).indexOf(requestedCitySplit[0])
+      ].name;
+
+  else if (ruNames.map(el => el.ruName.toLowerCase()).includes(requestedCitySplit[0]))
+    requestedCitySplit[0] =
+      ruNames[
+        ruNames.map((el => el.ruName.toLowerCase())).indexOf(requestedCitySplit[0])
+      ].name;
   else if (/[а-яА-ЯЁё]/.test(requestedCitySplit[0]))
     requestedCitySplit[0] = await translate(requestedCitySplit[0], {
       from: "ru",
       to: "en"
     });
-  console.log(await translate(requestedCitySplit[0], {from: "ru", to: "en"}));
+  console.log(await translate(requestedCitySplit[0], { from: "ru", to: "en" }));
   if (requestedCitySplit[0].length < 3)
     ctx.reply(existUser.language == "RU" ? "Неверный запрос" : "Bad request");
   else if (requestedCitySplit.length == 1) {
