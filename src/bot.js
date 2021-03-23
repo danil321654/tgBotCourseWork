@@ -92,11 +92,11 @@ bot.action(/[\w]*-language/, async ctx => {
       ? ctx.update.message.chat.id
       : ctx.update.callback_query.message.chat.id
   });
-  await ctx.reply(
+  await ctx.reply(`${
     existUser.language == "RU"
-      ? "Прогноз погоды в каком городе вы хотите получать?"
-      : "Hello! In which city do you want to know the weather?"
-  );
+      ? "Прогноз погоды в каком городе вы хотите получать? (Если город не нашелся на кириллице, используйте латиницу)"
+      : "Hello! In which city do you want to know the weather? (Preffered in english but commonly works with cyrillic)"
+  }`);
   bot.on("message", async ctx => {
     await chooseCity(ctx);
     let existUser2 = await User.findOne({
