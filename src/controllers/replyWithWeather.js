@@ -72,6 +72,8 @@ module.exports = async (ctx, city = undefined) => {
       })
       .filter(el => el.diffCity < 2 && el.diffCountry === 0)
       .sort((a, b) => a.diffCity + a.diffCountry - b.diffCity - b.diffCountry);
+    if (res[0].diffCity == 0)
+      res = [res[0]]
   } else ctx.reply("Bad request");
   if (res.length == 1) {
     let response = await axios.get(

@@ -11,21 +11,25 @@ module.exports = async ctx => {
     let res = await axios.get(
       `https://newsapi.org/v2/top-headlines?country=${existUser.country}&apiKey=${process.env.newsApi}`
     );
-    res = res.data.articles
-      .map(a => ({sort: Math.random(), value: a}))
+    let resReserve = await axios.get(
+      `https://newsapi.org/v2/top-headlines?country=${existUser.language=="EN" ? "US" : existUser.language}&apiKey=${process.env.newsApi}`
+    );
+    res = (res.data.articles.length > 0 ? res.data.articles : resReserve.data.articles)
+      .map(a => ({ sort: Math.random(), value: a }))
       .sort((a, b) => a.sort - b.sort)
       .map(a => a.value)
       .slice(3, 6);
 
+    console.log(res);
     await Promise.all(
       res.map(async el => {
         await ctx.reply(
           `${el.title}\n${
-            existUser.language == "RU" ? "Больше информации" : "More info"
+          existUser.language == "RU" ? "Больше информации" : "More info"
           }: ${el.url}`
         );
         return el;
       })
     );
-  } catch (e) {}
+  } catch (e) { }
 };
