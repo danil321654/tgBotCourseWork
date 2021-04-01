@@ -27,17 +27,19 @@ module.exports = async ctx => {
       return item;
     });
   }
+
+  let res = await axios.get(
+    `http://data.fixer.io/api/latest?access_key=${process.env.currApi}&symbols=${currencies.toString()}&format=1`
+  );
+  console.log(res);
   await Promise.all(
     currencies.map(async (item, j) => {
       await Promise.all(
         currencies.map(async (item1, i) => {
-          let res = await axios.get(
-            `https://api.exchangeratesapi.io/latest?base=${item1}`
-          );
           console.log(res.data.rates);
           if (item != item1)
             currencyMatrixReply += `\t${item1}/${item} <b>${currencyFormat.format(
-              res.data.rates[item]
+              item1 != "EUR" ? res.data.rates[item] / res.data.rates[item1] : res.data.rates[item]
             )}</b>\n`;
           return item;
         })
@@ -49,6 +51,7 @@ module.exports = async ctx => {
   currencyMatrixReply = currencyMatrixReply.split('\n');
   currencyMatrixReply.sort();
   currencyMatrixReply = currencyMatrixReply.join('\n------------------\n');
-  
+  currencyMatrixReply = currencyMatrixReply + '\n------------------\n';
+
   if (currencyMatrixReply != "") await ctx.reply(`<pre>${currencyMatrixReply}</pre>`, { parse_mode: "HTML" });
 };
