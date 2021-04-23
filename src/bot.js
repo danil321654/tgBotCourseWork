@@ -1,10 +1,10 @@
 require("dotenv").config();
 const fs = require("fs");
-const {Markup} = require("telegraf");
+const { Markup } = require("telegraf");
 
 const schedule = require("node-schedule");
 
-const {bot, telegram} = require("./telegraf");
+const { bot, telegram } = require("./telegraf");
 const replyWithWeather = require("./controllers/replyWithWeather");
 const replyWithCurrency = require("./controllers/replyWithCurrency");
 const replyWithNews = require("./controllers/replyWithNews");
@@ -32,10 +32,10 @@ const delMenu = async ctx => {
         ? ctx.update.message.message_id
         : ctx.update.callback_query.message.message_id
     );
-  } catch {}
+  } catch { }
 };
 
-const sendJob = async function(ctx) {
+const sendJob = async function (ctx) {
   let existUser = await User.findOne({
     chatId: ctx.update.message
       ? ctx.update.message.chat.id
@@ -64,17 +64,6 @@ bot.start(async ctx => {
   await setupLanguage(ctx);
 });
 
-/*
-await ctx.reply(
-  await translate(
-    "Hello! In which city do you want to know the weather?",
-    "ru"
-  )
-);
-bot.on("message", async ctx => {
-  await chooseCity(ctx);
-  await setupCurrency(ctx);
-});*/
 
 bot.action(/^[A-Za-z _]+$/, async ctx => {
   await chooseCity(ctx, ctx.update.callback_query.data);
@@ -86,6 +75,7 @@ bot.action(/[$€₽¥] [\w]*/, async ctx => {
 });
 
 bot.action(/[\w]*-language/, async ctx => {
+
   await setupLanguage(ctx);
   let existUser = await User.findOne({
     chatId: ctx.update.message
@@ -96,7 +86,7 @@ bot.action(/[\w]*-language/, async ctx => {
     existUser.language == "RU"
       ? "Прогноз погоды в каком городе вы хотите получать? (Если город не нашелся на кириллице, используйте латиницу)"
       : "Hello! In which city do you want to know the weather? (Preffered in english but commonly works with cyrillic)"
-  }`);
+    }`);
   bot.on("message", async ctx => {
     await chooseCity(ctx);
     let existUser2 = await User.findOne({
@@ -106,6 +96,10 @@ bot.action(/[\w]*-language/, async ctx => {
     });
     if (existUser2.settingsPos == "currencies") await setupCurrency(ctx);
   });
+});
+
+bot.action(/[\w]*-language1/, async ctx => {
+  runAsker(ctx);
 });
 
 bot.action("-1", async ctx => {
@@ -157,7 +151,7 @@ bot.action(/[0-9]* hours/, async ctx => {
   await runAsker(ctx, sendJob);
 
   job = schedule.scheduleJob(
-    `0 0 ${+ctx.update.callback_query.data.split(" ")[0]-3} * * *`,
+    `0 0 ${+ctx.update.callback_query.data.split(" ")[0] - 3} * * *`,
     async () => {
       await delMenu(ctx);
       await sendJob(ctx);
@@ -186,7 +180,7 @@ bot.command("weather", async ctx => await getWeather(ctx));
 
 const getCurrencies = async ctx => {
   await replyWithCurrency(ctx);
-  const sendJob = async function() {
+  const sendJob = async function () {
     let existUser = await User.findOne({
       chatId: ctx.update.message
         ? ctx.update.message.chat.id
@@ -208,7 +202,7 @@ bot.command("currencies", async ctx => await getCurrencies(ctx));
 
 const getNews = async ctx => {
   await replyWithNews(ctx);
-  const sendJob = async function() {
+  const sendJob = async function () {
     let existUser = await User.findOne({
       chatId: ctx.update.message
         ? ctx.update.message.chat.id
@@ -246,7 +240,140 @@ bot.command("subscribe", async ctx => {
         await runAsker(ctx);
       }
     );
-  } catch {}
+  } catch { }
 });
+
+
+
+bot.action("@setupLang", async ctx => {
+  delMenu(ctx);
+  console.log("wwwwww");
+  await User.findOneAndUpdate(
+    {
+      chatId: ctx.update.message
+        ? ctx.update.message.chat.id
+        : ctx.update.callback_query.message.chat.id
+    },
+    {
+      $set: {
+        settingsPos: "language"
+      }
+    }
+  );
+  await setupLanguage(ctx, true);
+  await User.findOneAndUpdate(
+    {
+      chatId: ctx.update.message
+        ? ctx.update.message.chat.id
+        : ctx.update.callback_query.message.chat.id
+    },
+    {
+      $set: {
+        settingsPos: "working"
+      }
+    }
+  );
+});
+
+bot.action("@setupSchedule", async ctx => {
+  //delMenu(ctx);
+  console.log("wwwwww");
+  await User.findOneAndUpdate(
+    {
+      chatId: ctx.update.message
+        ? ctx.update.message.chat.id
+        : ctx.update.callback_query.message.chat.id
+    },
+    {
+      $set: {
+        settingsPos: "timer"
+      }
+    }
+  );
+  await setupTimer(ctx, true);
+  await User.findOneAndUpdate(
+    {
+      chatId: ctx.update.message
+        ? ctx.update.message.chat.id
+        : ctx.update.callback_query.message.chat.id
+    },
+    {
+      $set: {
+        settingsPos: "working"
+      }
+    }
+  );
+});
+
+bot.action("@setupCurr", async ctx => {
+  //delMenu(ctx);
+  console.log("wwwwww");
+  await User.findOneAndUpdate(
+    {
+      chatId: ctx.update.message
+        ? ctx.update.message.chat.id
+        : ctx.update.callback_query.message.chat.id
+    },
+    {
+      $set: {
+        settingsPos: "currencies"
+      }
+    }
+  );
+  await setupCurrency(ctx, true);
+  await User.findOneAndUpdate(
+    {
+      chatId: ctx.update.message
+        ? ctx.update.message.chat.id
+        : ctx.update.callback_query.message.chat.id
+    },
+    {
+      $set: {
+        settingsPos: "working"
+      }
+    }
+  );
+});
+
+
+
+bot.action("@setup", async ctx => {
+  let existUser = await User.findOne({
+    chatId: ctx.update.message
+      ? ctx.update.message.chat.id
+      : ctx.update.callback_query.message.chat.id
+  });
+  await ctx.replyWithMarkdown(
+    existUser.language == "RU" ? "Что изменить?" : "What to setup?:",
+    {
+      reply_markup: JSON.stringify({
+        inline_keyboard: [[
+          Markup.callbackButton(
+            `language`, '@setupLang'
+          )
+        ],
+        [
+          Markup.callbackButton(
+            `city`, '@setupCity'
+          )
+        ],
+        [
+          Markup.callbackButton(
+            `currencies`, '@setupCurr'
+          )
+        ],
+        [
+          Markup.callbackButton(
+            `schedule`, '@setupSchedule'
+          )
+        ],
+        [Markup.callbackButton(`go back`, `-1`)]
+        ]
+      })
+    }
+  );
+})
+
+
 
 bot.launch();

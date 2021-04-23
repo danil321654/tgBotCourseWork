@@ -15,7 +15,8 @@ module.exports = async (ctx, callback) => {
           [
             ...["weather", "currencies", "news"].map(el =>
               Markup.callbackButton(el, `${el}!`)
-            )
+            ),
+            Markup.callbackButton("setup", `@setup`)
           ]
         ]
       })
